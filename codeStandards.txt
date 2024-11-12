@@ -1,0 +1,218 @@
+JS Coding Standards
+
+1.0 - Template literals: For inserting values into strings, use template literals.
+Inappropriate Way:
+const name = "John";
+console.log("Hi! I'm" + name + "!");
+Standard Way:
+const name = "John";
+console.log(`Hi! I'm ${name}!`);
+
+2.0 - ES6 standard: A simple object destructuring instance
+Inappropriate Way:
+let person = {name: "Peter", age: 28};
+let name= person.name
+let age= person.age
+Standard Way:
+let person = {name: "Peter", age: 28};
+let {name, age} = person; // Object destructuring assignment
+
+3.0 - when importing any external js packages, ensure to leverage the maximum out of it. For instance using Lodash package
+Inappropriate Way:
+if (totalReportIds == global.constants.ESLINT.ZERO && callingFunc == global.constants.SAVE) 
+Standard Way:
+if( _.isEqual(totalReportIds , val2)) &&  _.isEqual(callingFunc , global.constants.SAVE)))
+
+4.0 - Shortcuts for boolean tests
+Inappropriate Way:
+if (x === true) and if (x === false)
+Standard Way:
+if (x) and if (!x)
+
+5.0 - Prefer the strict equality (triple equals) and inequality operators over the loose equality (double equals) and inequality operators.
+Inappropriate Way:
+name == "Shilpa";
+age != 25;
+Standard Way:
+name === "John";
+age !== 25;
+
+6.0 - Please ensure that each line of code contains no more than 80-100 characters for better readability and understanding. If a line exceeds this limit, consider breaking it down into multiple lines to improve clarity.
+Inappropriate Way:
+nan
+Standard Way:
+nan
+
+7.0 - Control Request Payload Size
+Inappropriate Way:
+nan
+Standard Way:
+Example:-
+
+Express body-parser throws an error if the request payload is greater than the specified limit.
+
+Request entity too large
+
+8.0 - import files using interface way if the number of imports are pretty much: for example
+
+
+
+Inappropriate Way:
+const GET_LINE_MASTER_DATA_RETRIEVER = require("../data_access/database/report/LineMasterTblData");
+const SIMILAR_REPORT_ID_RETRIEVER = require("../data_access/database/report/GetSimilarReportId");
+Standard Way:
+1. Create a new JavaScript file, let's call it reportInterface.js.
+2. Inside reportInterface.js, define and export the functions you want to access from other modules.
+3. Require the interface module in the modules where you need to use these functions.
+
+
+reportInterface.js
+
+// reportInterface.js
+
+const GET_LINE_MASTER_DATA_RETRIEVER = require("../data_access/database/report/LineMasterTblData");
+const SIMILAR_REPORT_ID_RETRIEVER = require("../data_access/database/report/GetSimilarReportId");
+
+module.exports = {
+    getLineMasterData: GET_LINE_MASTER_DATA_RETRIEVER,
+    getSimilarReportId: SIMILAR_REPORT_ID_RETRIEVER
+};
+
+
+use in the required module
+
+// Other modules where you need to use the functions
+
+const reportInterface = require("./reportInterface");
+
+// Now you can use the functions from the interface module
+reportInterface.getLineMasterData();
+reportInterface.getSimilarReportId();
+
+9.0 - Avoid overheads in loops
+Inappropriate Way:
+for ex:  for (let counter = 0; counter < machineData.length; counter++) {
+//code goes here
+}
+Standard Way:
+machineData.foreach((machine, index){
+//code goes here
+})
+
+10.0 - Use shorthand property name and object destructuring approach
+Inappropriate Way:
+let testData={
+test:test,
+test_1:test_1,
+test_2:testing
+}
+Standard Way:
+
+let testData={test, test_1, test_2:testing}
+
+11.0 - One should never import dependencies in the function, rather import at the beginning of the file
+Inappropriate Way:
+nan
+Standard Way:
+nan
+
+12.0 - Define 0.0 or any such vales in a constant file and use like below
+Inappropriate Way:
+a[b.comment] = 0.0;
+Standard Way:
+
+
+1. import constants file in your module and use like below
+const constants= require('./constants');
+
+a[b.comment] = constants.ZERO
+
+13.0 - Avoid using "" for assignment
+Inappropriate Way:
+let updatedReportId = "";
+Standard Way:
+let updatedReportId = null;
+
+14.0 - Create util functions wherever required
+Inappropriate Way:
+ if (dayChangeTimeData && dayChangeTimeData.Value && new Date(dayChangeTimeData.Value).toString() !== global.constants.INVALID_DATE_STRING) {
+                let shiftDateTime = new Date(dayChangeTimeData.Value);
+                dayChangeTime[global.constants.ESLINT.ZERO] = shiftDateTime.getHours();
+                dayChangeTime[global.constants.ESLINT.ONE] = shiftDateTime.getMinutes();
+                dayChangeTime[global.constants.ESLINT.TWO] = shiftDateTime.getSeconds(); //Akanksha: can we create a util function for returning  dayChangeTime
+            }
+Standard Way:
+ if (dayChangeTimeData && dayChangeTimeData.Value && new Date(dayChangeTimeData.Value).toString() !== global.constants.INVALID_DATE_STRING) {
+		const{getHours, getMinutes, getSeconds  }=  utils.UtilShiftDateTime(shiftDateTime);
+		 dayChangeTime[global.constants.ESLINT.ZERO] = getHours;
+                 dayChangeTime[global.constants.ESLINT.ONE] = getMinutes;
+                 dayChangeTime[global.constants.ESLINT.TWO] = getSeconds;
+            }
+
+And create UtilShiftDateTime function to handle processing on shiftDateTime
+
+15.0 - Avoid sending multiple comma separated params, rather send as an object
+Inappropriate Way:
+ let GetCurrentDayDefectData = async (dataPacket, currentDayStartTime, currentDayEndTime, downStreamMachine, reportId) => {
+//your code goes here
+})
+Standard Way:
+let GetCurrentDayDefectData = async (data){
+{dataPacket, currentDayStartTime, currentDayEndTime, downStreamMachine, reportId}=data
+//rest of the code
+})
+
+16.0 - Better approach to use cloneDeep
+Inappropriate Way:
+let monthlyReport = JSON.parse(JSON.stringify(dataPacket));
+Standard Way:
+let monthlyReport =_.cloneDeep(dataPacket)
+
+17.0 - Ensure to handle null/undefined condition 
+Inappropriate Way:
+let totalColObj = JSON.parse(JSON.stringify(dummyDataPacket));
+
+        try {
+            //working day is displayed as 1
+            totalColObj.workingDay = 1;
+            //monthly sum
+            totalColObj.lot = _.sumBy(_.values(monthlyReport), 'lot') 
+Standard Way:
+let totalColObj = JSON.parse(JSON.stringify(dummyDataPacket));
+
+        try {
+            //working day is displayed as 1
+            totalColObj.workingDay = 1;
+            //monthly sum
+            totalColObj.lot = _.sumBy(_.values(monthlyReport), 'lot') ?? 0; //"Pass some default value to avoid undefined scenario" 
+
+20.0 - Always focus on modular approach to follow one of the SOLID principles
+Inappropriate Way:
+nan
+Standard Way:
+nan
+
+21.0 - Ensure to properly validate request and response body before inserting into the database
+Inappropriate Way:
+nan
+Standard Way:
+nan
+
+22.0 - Limit to the use of global variables
+Inappropriate Way:
+nan
+Standard Way:
+Using global variables can lead to several drawbacks:
+
+Encapsulation and Modularity: Global variables can break encapsulation and modularity in your code, as they can be accessed and modified from any part of your program. This can make it difficult to understand the flow of data and can lead to unexpected side effects.
+
+Name Clashes: Global variables increase the risk of name clashes, especially in larger projects where multiple developers are working on different parts of the codebase. If two or more global variables have the same name, it can lead to conflicts and errors.
+
+Debugging and Testing: Global variables can make debugging and testing more difficult. Since they can be modified from anywhere in the code, tracking down the source of a bug or unexpected behavior related to a global variable can be challenging.
+
+Dependency Injection: Using global variables can make it harder to follow the principle of dependency injection, which is important for writing modular and testable code. Instead of relying on global variables, it's better to pass dependencies explicitly to functions or classes.
+
+Performance: Accessing global variables can be slower than accessing local variables due to the additional scope chain lookup required. While this difference may be negligible in most cases, it can become significant in performance-critical code.
+
+Security: Global variables can pose security risks, especially in web applications. If sensitive data is stored in global variables, it may be accessible to malicious scripts or attackers.
+

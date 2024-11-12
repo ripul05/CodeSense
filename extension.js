@@ -2,12 +2,26 @@
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
 const getGPT4js = require("gpt4js");
+const fs  = require("fs")
+const path = require("path")
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
 // // CommonJS
 global.fetch = fetch;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+
+let codeStandards;
+const filePath = path.join(__dirname, 'codeStandards.txt');
+    // Asynchronously read the file
+    try {
+        codeStandards = fs.readFileSync(filePath, 'utf8');
+    } catch (err) {
+        console.error('Error reading file:', err);
+    }
+
+
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -28,62 +42,92 @@ function activate(context) {
     const reviewDisposable = vscode.commands.registerCommand('codesense.reviewCode', async function () {
         console.log('Review Code');
         const editor = vscode.window.activeTextEditor;
-        
-        if (editor) {
-            const selectedText = editor.document.getText(editor.selection);
-            if (selectedText) {
-                // Perform the review action
-                const reviewMessage = await performGPT4jsAction(selectedText, "Please review this code");
-                
-                // Generate a unique URI for each review with a timestamp
-                const timestamp = new Date().getTime();
-                const docUri = vscode.Uri.parse(`code-review://review/CodeReviewMessage-${timestamp}`);
-                
-                // Register a provider to open a new tab with the review content
-                const provider = vscode.workspace.registerTextDocumentContentProvider('code-review', {
-                    provideTextDocumentContent: () => reviewMessage
-                });
-                
-                // Show the document in a new editor tab
-                const document = await vscode.workspace.openTextDocument(docUri);
-                await vscode.window.showTextDocument(document, { preview: false });
-                
-                // Dispose of the provider after use
-                provider.dispose();
-            } else {
-                vscode.window.showWarningMessage("No code selected for review.");
+        vscode.window.withProgress(
+            {
+                location :  vscode.ProgressLocation.Window,
+                title : "Reviewing Code",
+                cancellable : false
+            },
+            async (progress) =>{
+                progress.report({
+                    increment : 0
+                })
+                if (editor) {
+                    const selectedText = editor.document.getText(editor.selection);
+                    if (selectedText) {
+                        // Perform the review action
+                        const reviewMessage = await performGPT4jsAction(selectedText, `Review the given code using the following details of coding standards ${codeStandards} and give the improvement points according to the violated rules`);
+                        
+                        // Generate a unique URI for each review with a timestamp
+                        const timestamp = new Date().getTime();
+                        const docUri = vscode.Uri.parse(`code-review://review/CodeReviewMessage-${timestamp}`);
+                        
+                        // Register a provider to open a new tab with the review content
+                        const provider = vscode.workspace.registerTextDocumentContentProvider('code-review', {
+                            provideTextDocumentContent: () => reviewMessage
+                        });
+                        
+                        // Show the document in a new editor tab
+                        const document = await vscode.workspace.openTextDocument(docUri);
+                        await vscode.window.showTextDocument(document, { preview: false });
+                        
+                        // Dispose of the provider after use
+                        provider.dispose();
+                    } else {
+                        vscode.window.showWarningMessage("No code selected for review.");
+                    }
+                }
+                progress.report({
+                    increment : 100
+                })
             }
-        }
+        )
     });
     
 
     const optimizeDisposable = vscode.commands.registerCommand('codesense.optimizeCode', async function () {
 		console.log('Optimize Code')
         const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            const selectedText = editor.document.getText(editor.selection);
-            if (selectedText) {
-                const optimizeMessage = await performGPT4jsAction(selectedText, "Please Optimize this code");
-
-                // Generate a unique URI for each review with a timestamp
-                const timestamp = new Date().getTime();
-                const docUri = vscode.Uri.parse(`code-optimization://optimization/CodeOptimizationMessage-${timestamp}`);
-                
-                // Register a provider to open a new tab with the optimization content
-                const provider = vscode.workspace.registerTextDocumentContentProvider('code-optimization', {
-                    provideTextDocumentContent: () => optimizeMessage
-                });
-                
-                // Show the document in a new editor tab
-                const document = await vscode.workspace.openTextDocument(docUri);
-                await vscode.window.showTextDocument(document, { preview: false });
-    
-                // Dispose of the provider after use
-                provider.dispose();
-            } else {
-                vscode.window.showWarningMessage("No code selected for optimization.");
+        vscode.window.withProgress(
+            {
+                location :  vscode.ProgressLocation.Window,
+                title : "Optimizing Code",
+                cancellable : false
+            },
+            async (progress) =>{
+                progress.report({
+                    increment : 0
+                })
+                if (editor) {
+                    const selectedText = editor.document.getText(editor.selection);
+                    if (selectedText) {
+                        const optimizeMessage = await performGPT4jsAction(selectedText, "Kindly optimize this given code and give detailed description of optimization.");
+        
+                        // Generate a unique URI for each review with a timestamp
+                        const timestamp = new Date().getTime();
+                        const docUri = vscode.Uri.parse(`code-optimization://optimization/CodeOptimizationMessage-${timestamp}`);
+                        
+                        // Register a provider to open a new tab with the optimization content
+                        const provider = vscode.workspace.registerTextDocumentContentProvider('code-optimization', {
+                            provideTextDocumentContent: () => optimizeMessage
+                        });
+                        
+                        // Show the document in a new editor tab
+                        const document = await vscode.workspace.openTextDocument(docUri);
+                        await vscode.window.showTextDocument(document, { preview: false });
+            
+                        // Dispose of the provider after use
+                        provider.dispose();
+                    } else {
+                        vscode.window.showWarningMessage("No code selected for optimization.");
+                    }
+                }
+                progress.report({
+                    increment : 100
+                })
             }
-        }
+        )
+ 
 	});
 
 	context.subscriptions.push(reviewDisposable);
