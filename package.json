@@ -16,8 +16,26 @@
       {
         "command": "codesense.reviewCode",
         "title": "Review Code"
+      },
+      {
+        "command": "codesense.optimizeCode",
+        "title": "Optimize Code"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+          {
+              "command": "codesense.reviewCode",
+              "when": "editorHasSelection",
+              "group": "navigation"
+          },
+          {
+            "command": "codesense.optimizeCode",
+            "when": "editorHasSelection",
+            "group": "navigation"
+        }
+      ]
+  }
   },
   "scripts": {
     "lint": "eslint .",
@@ -34,6 +52,7 @@
   },
   "dependencies": {
     "gpt4js": "^1.7.8",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "vscode": "^1.1.37"
   }
 }

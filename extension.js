@@ -24,21 +24,70 @@ function activate(context) {
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with  registerCommand
 	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('codesense.reviewCode', async function () {
-		console.log('Review Code')
+
+    const reviewDisposable = vscode.commands.registerCommand('codesense.reviewCode', async function () {
+        console.log('Review Code');
         const editor = vscode.window.activeTextEditor;
+        
         if (editor) {
             const selectedText = editor.document.getText(editor.selection);
             if (selectedText) {
+                // Perform the review action
                 const reviewMessage = await performGPT4jsAction(selectedText, "Please review this code");
-                vscode.window.showInformationMessage("Code Review: " + reviewMessage);
+                
+                // Generate a unique URI for each review with a timestamp
+                const timestamp = new Date().getTime();
+                const docUri = vscode.Uri.parse(`code-review://review/CodeReviewMessage-${timestamp}`);
+                
+                // Register a provider to open a new tab with the review content
+                const provider = vscode.workspace.registerTextDocumentContentProvider('code-review', {
+                    provideTextDocumentContent: () => reviewMessage
+                });
+                
+                // Show the document in a new editor tab
+                const document = await vscode.workspace.openTextDocument(docUri);
+                await vscode.window.showTextDocument(document, { preview: false });
+                
+                // Dispose of the provider after use
+                provider.dispose();
             } else {
                 vscode.window.showWarningMessage("No code selected for review.");
             }
         }
+    });
+    
+
+    const optimizeDisposable = vscode.commands.registerCommand('codesense.optimizeCode', async function () {
+		console.log('Optimize Code')
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const selectedText = editor.document.getText(editor.selection);
+            if (selectedText) {
+                const optimizeMessage = await performGPT4jsAction(selectedText, "Please Optimize this code");
+
+                // Generate a unique URI for each review with a timestamp
+                const timestamp = new Date().getTime();
+                const docUri = vscode.Uri.parse(`code-optimization://optimization/CodeOptimizationMessage-${timestamp}`);
+                
+                // Register a provider to open a new tab with the optimization content
+                const provider = vscode.workspace.registerTextDocumentContentProvider('code-optimization', {
+                    provideTextDocumentContent: () => optimizeMessage
+                });
+                
+                // Show the document in a new editor tab
+                const document = await vscode.workspace.openTextDocument(docUri);
+                await vscode.window.showTextDocument(document, { preview: false });
+    
+                // Dispose of the provider after use
+                provider.dispose();
+            } else {
+                vscode.window.showWarningMessage("No code selected for optimization.");
+            }
+        }
 	});
 
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(reviewDisposable);
+    context.subscriptions.push(optimizeDisposable)
 }
 async function performGPT4jsAction(code, action) {
     const messages = [{ role: "user", content: `${action}: ${code}` }];
