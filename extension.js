@@ -26,6 +26,40 @@ const filePath = path.join(__dirname, 'codeStandards.txt');
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 
+function getWebviewContent(message, title) {
+    return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${title}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 20px;
+                }
+                h1 {
+                    color: #007acc;
+                }
+                pre {
+                    background-color: #f4f4f4;
+                    padding: 15px;
+                    border-radius: 5px;
+                    overflow-x: auto;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>${title}</h1>
+            <pre>${message}</pre>
+        </body>
+        </html>
+    `;
+}
+
+
 /**
  * @param {vscode.ExtensionContext} context
  */
@@ -57,22 +91,16 @@ function activate(context) {
                     if (selectedText) {
                         // Perform the review action
                         const reviewMessage = await performGPT4jsAction(selectedText, `Review the given code using the following details of coding standards ${codeStandards} and give the improvement points according to the violated rules`);
-                        
-                        // Generate a unique URI for each review with a timestamp
-                        const timestamp = new Date().getTime();
-                        const docUri = vscode.Uri.parse(`code-review://review/CodeReviewMessage-${timestamp}`);
-                        
-                        // Register a provider to open a new tab with the review content
-                        const provider = vscode.workspace.registerTextDocumentContentProvider('code-review', {
-                            provideTextDocumentContent: () => reviewMessage
-                        });
-                        
-                        // Show the document in a new editor tab
-                        const document = await vscode.workspace.openTextDocument(docUri);
-                        await vscode.window.showTextDocument(document, { preview: false });
-                        
-                        // Dispose of the provider after use
-                        provider.dispose();
+
+                        const panel = vscode.window.createWebviewPanel(
+                            'codeReview',            // Internal identifier of the webview
+                            'Code Review Result',    // Title of the panel displayed to the user
+                            vscode.ViewColumn.One,         // Editor column to show the new webview panel in
+                            { enableScripts: true }        // Enable scripts in the webview
+                        );
+ 
+                        // HTML content for the webview
+                        panel.webview.html = getWebviewContent(reviewMessage, 'Code Review Result');
                     } else {
                         vscode.window.showWarningMessage("No code selected for review.");
                     }
@@ -103,21 +131,15 @@ function activate(context) {
                     if (selectedText) {
                         const optimizeMessage = await performGPT4jsAction(selectedText, "Kindly optimize this given code and give detailed description of optimization.");
         
-                        // Generate a unique URI for each review with a timestamp
-                        const timestamp = new Date().getTime();
-                        const docUri = vscode.Uri.parse(`code-optimization://optimization/CodeOptimizationMessage-${timestamp}`);
-                        
-                        // Register a provider to open a new tab with the optimization content
-                        const provider = vscode.workspace.registerTextDocumentContentProvider('code-optimization', {
-                            provideTextDocumentContent: () => optimizeMessage
-                        });
-                        
-                        // Show the document in a new editor tab
-                        const document = await vscode.workspace.openTextDocument(docUri);
-                        await vscode.window.showTextDocument(document, { preview: false });
-            
-                        // Dispose of the provider after use
-                        provider.dispose();
+                        const panel = vscode.window.createWebviewPanel(
+                            'codeOptimization',            // Internal identifier of the webview
+                            'Code Optimization Result',    // Title of the panel displayed to the user
+                            vscode.ViewColumn.One,         // Editor column to show the new webview panel in
+                            { enableScripts: true }        // Enable scripts in the webview
+                        );
+ 
+                        // HTML content for the webview
+                        panel.webview.html = getWebviewContent(optimizeMessage, 'Code Optimization Result');
                     } else {
                         vscode.window.showWarningMessage("No code selected for optimization.");
                     }
@@ -133,6 +155,7 @@ function activate(context) {
 	context.subscriptions.push(reviewDisposable);
     context.subscriptions.push(optimizeDisposable)
 }
+
 async function performGPT4jsAction(code, action) {
     const messages = [{ role: "user", content: `${action}: ${code}` }];
     const options = {
