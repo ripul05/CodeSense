@@ -12,14 +12,42 @@ global.fetch = fetch;
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 
-let codeStandards;
-const filePath = path.join(__dirname, 'codeStandards.txt');
-    // Asynchronously read the file
-    try {
-        codeStandards = fs.readFileSync(filePath, 'utf8');
-    } catch (err) {
-        console.error('Error reading file:', err);
-    }
+const XLSX = require('xlsx');
+
+let combinedRules = ''
+// Function to read all sheets in an Excel file
+function readAllSheets(filePath) {
+    // Load the workbook from the file
+    const workbook = XLSX.readFile(filePath);
+
+    // Get all sheet names
+    const sheetNames = workbook.SheetNames;
+
+    // Iterate over each sheet and read data
+    
+
+    sheetNames.forEach((sheetName) => {
+        const worksheet = workbook.Sheets[sheetName];
+        const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 }); // Read sheet data as a 2D array
+        
+        // Start with the sheet name
+        combinedRules += `Sheet: ${sheetName}\n`;
+        
+        // Add each row's data in a readable format
+        data.forEach((row) => {
+            combinedRules += row.join(", ") + "\n";  // Join each row's cells with commas
+        });
+        
+        // Add a newline to separate sheets
+        combinedRules += "\n";
+    });
+    console.log(combinedRules)
+    
+}
+
+// Define the file path (adjust this path to your file location)
+const filePath = path.join(__dirname, 'Node_JS_CodingStandards.xlsx');
+readAllSheets(filePath);
 
 
 
@@ -39,13 +67,16 @@ function getWebviewContent(message, title) {
                     font-family: Arial, sans-serif;
                     margin: 0;
                     padding: 20px;
+                    background-color: black;
+                    color: white;
                 }
                 h1 {
                     color: #007acc;
                 }
                 pre {
-                    background-color: #f4f4f4;
+                    background-color: black;
                     padding: 15px;
+                    border: 1px solid green;
                     border-radius: 5px;
                     overflow-x: auto;
                 }
@@ -90,8 +121,11 @@ function activate(context) {
                     const selectedText = editor.document.getText(editor.selection);
                     if (selectedText) {
                         // Perform the review action
-                        const reviewMessage = await performGPT4jsAction(selectedText, `Review the given code using the following details of coding standards ${codeStandards} and give the improvement points according to the violated rules`);
-
+                        const reviewMessage = await performGPT4jsAction(
+                            selectedText, 
+                            `Please review the provided code according to the specified rules in ${combinedRules}. Identify any rules that were not met, listing the rule number, name, and an explanation of each failure. Additionally, offer improvement suggestions for each issue found and provide a revised version of the code that aligns with the standards.`
+                        );
+                        
                         const panel = vscode.window.createWebviewPanel(
                             'codeReview',            // Internal identifier of the webview
                             'Code Review Result',    // Title of the panel displayed to the user
