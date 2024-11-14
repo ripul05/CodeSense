@@ -55,6 +55,41 @@ readAllSheets(filePath);
 // Your extension is activated the very first time the command is executed
 
 function getWebviewContent(message, title) {
+
+    const lines = message.split('\n');
+
+    // Variables to hold parsed content
+    let htmlContent = '';
+    let insideCodeBlock = false;
+
+    // Loop through each line and categorize it
+    lines.forEach(line => {
+        line = line.trim(); // Trim extra whitespace
+
+        if (line.startsWith('###')) {
+            // Heading
+            htmlContent += `<h2>${line.replace('###', '').trim()}</h2>`;
+        } else if (line.startsWith('**') && line.endsWith('**')) {
+            // Title within a list (e.g., Rule titles)
+            htmlContent += `<h3>${line.replace(/\*\*/g, '').trim()}</h3>`;
+        } else if (line.startsWith('```javascript')) {
+            // Code block start
+            insideCodeBlock = true;
+            htmlContent += '<div class="code-block"><pre><code>';
+        } else if (line.startsWith('```')) {
+            // Code block end
+            insideCodeBlock = false;
+            htmlContent += '</code></pre></div>';
+        } else if (insideCodeBlock) {
+            // Inside code block
+            htmlContent += `${line}\n`; // Keep line breaks for code readability
+        } else if (line) {
+            // Regular paragraph
+            // htmlContent += `<p>${line}</p>`;
+            htmlContent += `<p>${line.replace(/\*\*(.*?)\*\*/g, '<span class="bold">$1</span>')}</p>`;
+        }
+    });
+
     return `
         <!DOCTYPE html>
         <html lang="en">
@@ -70,21 +105,42 @@ function getWebviewContent(message, title) {
                     background-color: black;
                     color: white;
                 }
+                h2{
+                    color: #3776a1;
+                }
                 h1 {
                     color: #007acc;
                 }
                 pre {
                     background-color: black;
                     padding: 15px;
-                    border: 1px solid green;
-                    border-radius: 5px;
+                    border: 2px solid rgb(47, 47, 74);
+                    border-radius: 15px;
                     overflow-x: auto;
+                    box-shadow: 
+                    rgba(47, 47, 74, 0.25) 0px 64px 65px,   /* Increased Offset-Y from 54px to 64px and Blur Radius from 55px to 65px */
+                    rgba(47, 47, 74, 0.12) 0px -20px 40px,  /* Increased Offset-Y from -12px to -20px and Blur Radius from 30px to 40px */
+                    rgba(47, 47, 74, 0.12) 0px 8px 10px,    /* Increased Offset-Y from 4px to 8px and Blur Radius from 6px to 10px */
+                    rgba(47, 47, 74, 0.17) 0px 20px 23px,   /* Increased Offset-Y from 12px to 20px and Blur Radius from 13px to 23px */
+                    rgba(47, 47, 74, 0.09) 0px -6px 10px;   /* Increased Offset-Y from -3px to -6px and Blur Radius from 5px to 10px */
                 }
+                code {
+                    color: #e3d1d1;
+                }
+                #content{
+                    background-color: black;
+                }
+                .bold{
+                    font-weight: 600;
+                    color: #c45b16;
+                    font-size: 12px
+                }
+                    
             </style>
         </head>
         <body>
             <h1>${title}</h1>
-            <pre>${message}</pre>
+            <div id = "content">${htmlContent}</div>
         </body>
         </html>
     `;

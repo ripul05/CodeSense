@@ -24,18 +24,18 @@
     ],
     "menus": {
       "editor/context": [
-          {
-              "command": "codesense.reviewCode",
-              "when": "editorHasSelection",
-              "group": "navigation"
-          },
-          {
-            "command": "codesense.optimizeCode",
-            "when": "editorHasSelection",
-            "group": "navigation"
+        {
+          "command": "codesense.reviewCode",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        },
+        {
+          "command": "codesense.optimizeCode",
+          "when": "editorHasSelection",
+          "group": "navigation"
         }
       ]
-  }
+    }
   },
   "scripts": {
     "lint": "eslint .",
@@ -53,6 +53,7 @@
   "dependencies": {
     "gpt4js": "^1.7.8",
     "node-fetch": "^3.3.2",
-    "vscode": "^1.1.37"
+    "vscode": "^1.1.37",
+    "xlsx": "^0.18.5"
   }
 }
